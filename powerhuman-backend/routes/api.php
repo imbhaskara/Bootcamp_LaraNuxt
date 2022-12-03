@@ -16,9 +16,23 @@ use App\Http\Controllers\API\CompanyController;
 |
 */
 
-Route::post('company', [CompanyController::class, 'create'])->middleware('auth:sanctum');
 
+// Auth API without middleware
 Route::post('login', [UserController::class, 'login']);
 Route::post('register', [UserController::class, 'register']);
-Route::post('logout', [UserController::class, 'logout'])->middleware('auth:sanctum');
-Route::get('user', [UserController::class, 'fetch'])->middleware('auth:sanctum');
+
+Route::group([
+    'middleware' => 'auth:sanctum'
+], function () {
+    // Auth API -> using middleware auth:sanctum
+    Route::post('logout', [UserController::class, 'logout']);
+    Route::get('user', [UserController::class, 'fetch']);
+
+    // Company API
+    Route::prefix('company')->name('company.')->group(function () {
+        Route::get('', [CompanyController::class, 'fetch'])->name('fetch');
+        Route::post('', [CompanyController::class, 'create'])->name('create');
+        Route::post('update/{id}', [CompanyController::class, 'update'])->name('update');
+    });
+});
+

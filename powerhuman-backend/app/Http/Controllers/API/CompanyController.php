@@ -7,13 +7,14 @@ use Illuminate\Http\Request;
 use App\Helpers\ResponseFormatter;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\CreateCompanyRequest;
+use App\Http\Requests\UpdateCompanyRequest;
 use App\Models\User;
 use Exception;
 use Illuminate\Support\Facades\Auth;
 
 class CompanyController extends Controller
 {
-    public function all(Request $request)
+    public function fetch(Request $request)
     {
         $id = $request->input('id');
         $name = $request->input('name');
@@ -45,12 +46,12 @@ class CompanyController extends Controller
     public function create(CreateCompanyRequest $request)
     {
         try {
-            //TODO: Check if company has logo
+            //Check if company has logo
             if ($request->hasFile('logo')) {
                 $path = $request->file('logo')->store('public/logos');
             }
 
-            //TODO: Create company
+            //Create company
             $company = Company::create([
                 'name' => $request->name,
                 'logo' => $path,
@@ -60,18 +61,46 @@ class CompanyController extends Controller
                 return ResponseFormatter::error('Company not found', 404);
             }
 
-            //TODO: Attach company to user
+            //Attach company to user
             $user = User::find(Auth::id());
             $user->companies()->attach($company->id);
 
-            //TODO: Load data user
+            //Load data user
             $company->load('users');
 
-            //TODO: Return response
+            //Return response
             return ResponseFormatter::success($company, 'Company created');
         } catch (Exception $e) {
             return ResponseFormatter::error($e->getMessage(), 500);
         }
-        
+    }
+
+    public function update(UpdateCompanyRequest $request, $id)
+    {
+        try {
+            //Get company data
+            $company = Company::find($id);
+
+            //Check if company exists
+            if (!$company) {
+                return ResponseFormatter::error('Company not found', 404);
+            }
+
+            //Check if company has logo
+            if ($request->hasFile('logo')) {
+                $path = $request->file('logo')->store('public/logos');
+            }
+
+            //Update company
+            $company->update([
+                'name' => $request->name,
+                'logo' => $path,
+            ]);
+
+            //Return response
+            return ResponseFormatter::success($company, 'Company updated');
+        } catch (Exception $e) {
+            return ResponseFormatter::error($e->getMessage(), 500);
+        }
     }
 }
