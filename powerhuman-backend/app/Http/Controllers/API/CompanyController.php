@@ -22,7 +22,10 @@ class CompanyController extends Controller
 
         // Datanya satuan -> Contoh URL: https://powerhuman-backend.test/api/company?id=1
         if ($id) {
-            $company = Company::with(['users'])->find($id);
+            // Filter company berdasarkan user yang login (Hanya bisa ngambil data sesuai user yang login)
+            $company = Company::with(['users'])->whereHas('users', function ($query) {
+                $query->where('user_id', Auth::id());
+            })->find($id);
 
             if ($company) {
                 return ResponseFormatter::success($company, 'Company found');
@@ -31,7 +34,9 @@ class CompanyController extends Controller
         }
 
         // Datanya list company -> Contoh URL: https://powerhuman-backend.test/api/company
-        $companies = Company::with(['users']);
+        $companies = Company::with(['users'])->whereHas('users', function ($query) {
+            $query->where('user_id', Auth::id());
+        });
 
         if ($name) {
             $companies->where('name', 'like', '%' . $name . '%');
