@@ -20,12 +20,15 @@ class CompanyController extends Controller
         $name = $request->input('name');
         $limit = $request->input('limit', 10);
 
-        // Datanya satuan -> Contoh URL: https://powerhuman-backend.test/api/company?id=1
+        // Filter company berdasarkan user yang login (Hanya bisa ngambil data sesuai user yang login)
+        $companyQuery = Company::with(['users'])->whereHas('users', function ($query) {
+            $query->where('user_id', Auth::id());
+        });
+
+        // Datanya satuan based id -> Contoh URL: https://powerhuman-backend.test/api/company?id=1
         if ($id) {
-            // Filter company berdasarkan user yang login (Hanya bisa ngambil data sesuai user yang login)
-            $company = Company::with(['users'])->whereHas('users', function ($query) {
-                $query->where('user_id', Auth::id());
-            })->find($id);
+            // Find Company Based ID
+            $company = $companyQuery->find($id);
 
             if ($company) {
                 return ResponseFormatter::success($company, 'Company found');
@@ -34,10 +37,9 @@ class CompanyController extends Controller
         }
 
         // Datanya list company -> Contoh URL: https://powerhuman-backend.test/api/company
-        $companies = Company::with(['users'])->whereHas('users', function ($query) {
-            $query->where('user_id', Auth::id());
-        });
+        $companies = $companyQuery;
 
+        // Datanya satuan based name -> Contoh URL: https://powerhuman-backend.test/api/company?name=StarX
         if ($name) {
             $companies->where('name', 'like', '%' . $name . '%');
         }
